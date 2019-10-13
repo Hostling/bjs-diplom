@@ -29,14 +29,33 @@ class Profile{
             callback(err, data);
         });
     }
+
+    convertMoney({fromCurrency, targetCurrency, targetAmount}, callback) {
+    	return ApiConnector.convertMoney({fromCurrency, targetCurrency, targetAmount}, (err, data) => {
+            console.log(`Converting ${fromCurrency} to ${targetAmount} ${targetCurrency}`);
+            callback(err, data);
+        });
+    }
 }
 
+function getStocks(from, to, callback) {
+	let rate = `${from}_${to}`;
+	let obj = ApiConnector.getStocks((err, data) => callback(err,data));
+	return obj;
+
+}
 
 function main() {
 	const Ivan = new Profile({
                     username: 'ivan',
                     name: { firstName: 'Ivan', lastName: 'Chernyshev' },
                     password: 'ivanspass',
+                });
+
+	const Petr = new Profile({
+                    username: 'petr',
+                    name: { firstName: 'Petr', lastName: 'Petrov' },
+                    password: 'strongPassword',
                 });
 
 
@@ -50,12 +69,19 @@ function main() {
 					console.error(`Error during authorization ivan`);
 				} else {
 					console.log(`User ivan authorized!`)
-					console.log('Уже почти..');
-					Ivan.addMoney({ currency: 'RUB', amount: 100 }, (err, data) => {
+					Ivan.addMoney({ currency: 'EUR', amount: 50000 }, (err, data) => {
 				        if (err) {
 				                console.error('Error during adding money to Ivan');
 				        } else {
-				                console.log(`Added 500000 euros to Ivan`);
+				                console.log(`Added 50000 euros to Ivan`);
+				                Ivan.convertMoney({ fromCurrency: 'EUR', targetCurrency: 'NETCOIN', targetAmount: 50}, (err, data) => {
+				                	if(err) {
+				                		console.error(`Error converting money ${err}`);
+				                	} else {
+				                		console.log(`Converted to coins: ${data}`);
+				                		console.log(getStocks('EUR', 'NETCOIN', (err, data) => data));
+				                	}
+				                });
 				    	}
 				    });
 				}
