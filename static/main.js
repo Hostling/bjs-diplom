@@ -1,10 +1,16 @@
 class Profile{
-	constructor(obj) {
-		this.source = obj;
-		this.username = obj.username;
-		this.firstname = obj.name.firstName;
-		this.lastname = obj.name.lastName;
-		this.password = obj.password;
+	constructor({
+    	username,
+    	name: { firstName, lastName },
+   		password,
+  	}) {
+		this.source = {
+	    	username,
+	    	name: { firstName, lastName },
+	   		password,
+  		};
+		this.username = username;
+		this.password = password;
 	}
 
 	addUser(callback) {
@@ -36,13 +42,17 @@ class Profile{
             callback(err, data);
         });
     }
+
+    transferMoney({to, amount}, callback) {
+    	return ApiConnector.transferMoney({to, amount}, (err, data) => {
+    		console.log(`Transfering ${amount} of Netcoins to ${to}`);
+    		callback(err, data);
+    	})
+    }
 }
 
-function getStocks(from, to, callback) {
-	let rate = `${from}_${to}`;
-	let obj = ApiConnector.getStocks((err, data) => callback(err,data));
-	return obj;
-
+function getStocks(callback) {
+	return ApiConnector.getStocks(callback);
 }
 
 function main() {
@@ -58,6 +68,8 @@ function main() {
                     password: 'strongPassword',
                 });
 
+	let stocks;
+	setTimeout(getStocks((err, data) => stocks = data[0]));
 
 	Ivan.addUser((error, data) => {
 		if(error) {
@@ -74,12 +86,26 @@ function main() {
 				                console.error('Error during adding money to Ivan');
 				        } else {
 				                console.log(`Added 50000 euros to Ivan`);
-				                Ivan.convertMoney({ fromCurrency: 'EUR', targetCurrency: 'NETCOIN', targetAmount: 50}, (err, data) => {
+				            	//Конвертируем 500 Евро в неткоины
+				            	let amountForConvertation = 500 * Number(stocks.EUR_NETCOIN);
+				                Ivan.convertMoney({ fromCurrency: 'EUR', targetCurrency: 'NETCOIN', targetAmount: amountForConvertation}, (err, data) => {
 				                	if(err) {
-				                		console.error(`Error converting money ${err}`);
+				                		console.error(`Error converting money`);
 				                	} else {
-				                		console.log(`Converted to coins: ${data}`);
-				                		console.log(getStocks('EUR', 'NETCOIN', (err, data) => data));
+				                		console.log('Converted to coins:', data);
+				                		Petr.addUser((error, data) => {
+				                			if(error) {
+				                				console.error('Error creating user Petr');
+				                			} else {
+				                				Ivan.transferMoney({ to: 'petr', amount: amountForConvertation}, (err, data) => {
+				                					if(err) {
+				                						console.error('Error transfering money');
+				                					} else {
+				                						console.log(`Petr has got ${amountForConvertation} NETCOINS`);
+				                					}
+				                				});
+				                			}
+				                		});
 				                	}
 				                });
 				    	}
